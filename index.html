@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stolný Tenis Turnaje</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">🏓 Turnaj Viac Skupín</div>
+        <nav class="main-nav">
+            <button id="nav-home" class="nav-btn active">Úvodná Stránka</button>
+            <button id="nav-players" class="nav-btn">Databáza hráčov</button>
+        </nav>
+    </header>
+
+    <main id="app-container">
+        <!-- Dynamically injected views go here -->
+    </main>
+
+    <!-- Global Modal for notifications -->
+    <div id="modal-container" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">Info</h3>
+            <p id="modal-message"></p>
+            <div class="modal-actions">
+                <button id="modal-confirm" class="btn primary">OK</button>
+                <button id="modal-cancel" class="btn secondary hidden">Zrušiť</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/engine/berger.js"></script>
+    <script src="js/engine/drawGroups.js"></script>
+    <script src="js/engine/ittfTieBreak.js"></script>
+    <script src="js/engine/koBracket.js"></script>
+    <script src="js/views/homeView.js"></script>
+    <script src="js/views/playersView.js"></script>
+    <script src="js/views/registrationView.js"></script>
+    <script src="js/views/groupsView.js"></script>
+    <script src="js/views/bracketView.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

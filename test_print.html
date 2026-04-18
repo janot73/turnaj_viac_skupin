@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Test pavilka tlaciaren</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Force print mode to display on standard screen for screenshot purposes */
+        body { background: white !important; color: black !important; }
+        .print-hide { display: none !important; }
+        .app-header { display: none !important; }
+        .match-controls { display: none !important; }
+        .match-box { border: 1px solid black !important; background: white; break-inside: avoid; margin: 0.25rem 0 !important; }
+        .bracket-container { overflow-x: visible; min-width: 0; padding: 0 !important; gap: 1rem !important; }
+        .bracket-column { min-width: 0; }
+        .player-row { padding: 0.2rem 0.3rem !important; font-size: 0.8rem !important; }
+        h2, h4 { font-size: 1rem !important; margin-bottom: 0.5rem !important; color: black !important; height: 1.5rem !important; line-height: 1.5rem !important; overflow: hidden !important; }
+        
+        .bracket-pair.has-next-match::after { border-color: black !important; right: -0.5rem !important; }
+        .bracket-pair.has-next-match::before { border-color: black !important; right: -1rem !important; width: 0.5rem !important; }
+        .bracket-pair.has-next-match .match-box::after { border-color: black !important; right: -0.5rem !important; width: 0.5rem !important; }
+        .bracket-column:not(:first-child) .match-box:not(.match-3rd)::before { border-color: black !important; left: -0.5rem !important; width: 0.5rem !important; }
+        .match-3rd::before { color: black !important; }
+    </style>
+    <script src="js/db.js"></script>
+    <script src="js/engine/koBracket.js"></script>
+    <script src="js/views/bracketView.js"></script>
+</head>
+<body>
+    <div id="app-container"></div>
+    <script>
+        window.DB = {
+            getTournament: function() {
+                return {
+                    id: 't1', name: "Test", bestOf: 3, status: 'ko',
+                    koBracket: [
+                        [
+                            { matchId: 'm1', roundLevel: 1, p1: {id: '1', name: 'Alena'}, p2: {id: '2', name: 'Boris'}, status: 'finished' },
+                            { matchId: 'm2', roundLevel: 1, p1: {id: '3', name: 'Cyril'}, p2: {id: '4', name: 'David'}, status: 'finished' }
+                        ],
+                        [
+                            { matchId: 'f1', roundLevel: 2, dependsOn: ['m1', 'm2'], p1: {id: '1', name: 'Alena'}, p2: {id: '3', name: 'Cyril'}, status: 'pending' },
+                            { matchId: 'f2', roundLevel: 99, dependsOn: ['m1', 'm2'], p1: {id: '2', name: 'Boris'}, p2: {id: '4', name: 'David'}, status: 'pending' }
+                        ]
+                    ]
+                };
+            },
+            saveTournament: function() {}
+        };
+        window.App = { navigate: function(){}, showAlert: function(){} };
+        window.KoBracketEngine = { updateDependentMatches: function(){} };
+        document.getElementById('app-container').appendChild(window.BracketView.render({tournamentId:'t1'}));
+        window.BracketView.init();
+    </script>
+</body>
+</html>

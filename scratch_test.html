@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Test stredov pavuka</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/db.js"></script>
+    <script src="js/engine/koBracket.js"></script>
+    <script src="js/views/bracketView.js"></script>
+</head>
+<body style="background: var(--bg-color); color: var(--text-color);">
+    <div id="app-container"></div>
+    <script>
+        // Mock DB
+        window.DB = {
+            getTournament: function(id) {
+                return {
+                    id: id,
+                    name: "Testovací turnaj",
+                    bestOf: 3,
+                    status: 'ko',
+                    koBracket: [
+                        [
+                            { matchId: 'm1', roundLevel: 1, p1: {id: '1', name: 'Alena B.'}, p2: {id: '2', name: 'Boris'}, status: 'pending' },
+                            { matchId: 'm2', roundLevel: 1, p1: {id: '3', name: 'Cyril'}, p2: {id: '4', name: 'David'}, status: 'pending' },
+                            { matchId: 'm3', roundLevel: 1, p1: {id: '5', name: 'Emil'}, p2: {id: 'bye', name: 'Voľný žreb'}, status: 'pending' },
+                            { matchId: 'm4', roundLevel: 1, p1: {id: '7', name: 'Gabo'}, p2: {id: '8', name: 'Hana'}, status: 'pending' }
+                        ],
+                        [
+                            { matchId: 's1', roundLevel: 2, dependsOn: ['m1', 'm2'], p1: null, p2: null, status: 'pending' },
+                            { matchId: 's2', roundLevel: 2, dependsOn: ['m3', 'm4'], p1: null, p2: null, status: 'pending' }
+                        ],
+                        [
+                            { matchId: 'f1', roundLevel: 3, dependsOn: ['s1', 's2'], p1: null, p2: null, status: 'pending' },
+                            { matchId: 'f2', roundLevel: 99, dependsOn: ['s1', 's2'], p1: null, p2: null, status: 'pending' }
+                        ]
+                    ]
+                };
+            },
+            saveTournament: function(t) {}
+        };
+        
+        window.App = {
+            showAlert: console.log,
+            navigate: console.log
+        };
+        
+        window.KoBracketEngine = {
+            updateDependentMatches: function() {}
+        };
+
+        const view = window.BracketView.render({ tournamentId: 't1' });
+        document.getElementById('app-container').appendChild(view);
+        window.BracketView.init();
+    </script>
+</body>
+</html>
