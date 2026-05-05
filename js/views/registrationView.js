@@ -71,6 +71,18 @@ window.RegistrationView = {
                         </div>
                         <button class="btn success mt-2" id="btn-draw-groups" style="width: 100%;">Vylosovať skupiny</button>
                     </div>
+
+                    <div class="mt-4 hidden" id="adjustment-panel">
+                        <h3>Korekcia vyžrebovaných skupín</h3>
+                        <p class="text-muted text-sm">Prehodenie je možné len horizontálne (v rámci rovnakého koša). Kliknite na dvoch hráčov v rovnakom riadku pre ich výmenu.</p>
+                        <div class="table-responsive mt-2">
+                            <table id="adjustment-table" style="text-align: center; border-collapse: collapse;">
+                                <!-- dynamically generated -->
+                            </table>
+                        </div>
+                        <button class="btn success mt-4" id="btn-confirm-groups" style="width: 100%;">Potvrdiť a prejsť na skupiny</button>
+                        <button class="btn danger mt-2" id="btn-cancel-draft" style="width: 100%;">Zrušiť a losovať znova</button>
+                    </div>
                 </div>
             </div>
             
@@ -127,6 +139,21 @@ window.RegistrationView = {
         };
         
         document.getElementById('btn-draw-groups').onclick = () => this.drawGroups();
+        document.getElementById('btn-confirm-groups').onclick = () => this.confirmGroups();
+        document.getElementById('btn-cancel-draft').onclick = () => {
+            this.t.status = 'registration';
+            this.t.groups = [];
+            DB.saveTournament(this.t);
+            document.getElementById('adjustment-panel').classList.add('hidden');
+            document.getElementById('draw-panel').classList.remove('hidden');
+        };
+
+        if(this.t.status === 'groups-draft') {
+            document.getElementById('end-registration-panel').classList.add('hidden');
+            document.getElementById('adjustment-panel').classList.remove('hidden');
+            this.selectedCell = null;
+            this.renderAdjustmentTable();
+        }
     },
 
     searchDB() {
@@ -234,10 +261,98 @@ window.RegistrationView = {
         // Uloženie
         this.t.groupsCount = groupsCount;
         this.t.groups = generatedGroups;
-        this.t.status = 'groups';
+        this.t.status = 'groups-draft';
         DB.saveTournament(this.t);
         
-        App.showAlert('Úspech', 'Skupiny boli úspešne vylosované. Presun do správy skupín.').then(() => {
+        document.getElementById('draw-panel').classList.add('hidden');
+        document.getElementById('adjustment-panel').classList.remove('hidden');
+        this.selectedCell = null;
+        this.renderAdjustmentTable();
+    },
+
+    renderAdjustmentTable() {
+        const table = document.getElementById('adjustment-table');
+        table.innerHTML = '';
+        
+        let maxPlayers = 0;
+        this.t.groups.forEach(g => { if(g.players.length > maxPlayers) maxPlayers = g.players.length; });
+        
+        let thead = '<thead><tr>';
+        this.t.groups.forEach(g => {
+            thead += `<th>${g.name}</th>`;
+        });
+        thead += '</tr></thead>';
+        table.innerHTML += thead;
+        
+        let tbody = document.createElement('tbody');
+        for(let r = 0; r < maxPlayers; r++) {
+            let tr = document.createElement('tr');
+            this.t.groups.forEach((g, cIdx) => {
+                let td = document.createElement('td');
+                td.style.border = '1px solid var(--border-color)';
+                td.style.padding = '0.5rem';
+                td.style.cursor = 'pointer';
+                td.dataset.row = r;
+                td.dataset.col = cIdx;
+                
+                let p = g.players[r];
+                if(p) {
+                    td.innerHTML = `<strong>${p.name}</strong><br><small>${p.club}</small><br><span class="badge text-xs">${p.points}</span>`;
+                } else {
+                    td.innerHTML = `<span class="text-muted">- prázdne -</span>`;
+                }
+                
+                if(this.selectedCell && this.selectedCell.r === r && this.selectedCell.c === cIdx) {
+                    td.style.backgroundColor = 'var(--primary-color)';
+                    td.style.color = 'white';
+                }
+                
+                td.onclick = () => this.handleCellClick(r, cIdx);
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+    },
+
+    handleCellClick(r, c) {
+        if(!this.selectedCell) {
+            this.selectedCell = { r, c };
+            this.renderAdjustmentTable();
+        } else {
+            if(this.selectedCell.r !== r) {
+                App.showAlert('Neplatná výmena', 'Hráčov môžete presúvať iba v rámci rovnakého výkonnostného koša (horizontálne v tom istom riadku).');
+                this.selectedCell = null;
+                this.renderAdjustmentTable();
+                return;
+            }
+            if(this.selectedCell.c !== c) {
+                // Vykonat vymenu
+                let p1 = this.t.groups[this.selectedCell.c].players[r];
+                let p2 = this.t.groups[c].players[r];
+                
+                if(p2) this.t.groups[this.selectedCell.c].players[r] = p2;
+                else this.t.groups[this.selectedCell.c].players.splice(r, 1);
+                
+                if(p1) this.t.groups[c].players[r] = p1;
+                else this.t.groups[c].players.splice(r, 1);
+                
+                // Oprava poli, ak by zostali undefined diery
+                this.t.groups.forEach(g => {
+                    g.players = g.players.filter(x => x !== undefined);
+                });
+                
+                DB.saveTournament(this.t);
+            }
+            this.selectedCell = null;
+            this.renderAdjustmentTable();
+        }
+    },
+
+    confirmGroups() {
+        this.t.status = 'groups';
+        DB.saveTournament(this.t);
+        App.showAlert('Úspech', 'Skupiny boli úspešne potvrdené. Presun do správy skupín.').then(() => {
             App.navigate('groups', { tournamentId: this.t.id });
         });
     }

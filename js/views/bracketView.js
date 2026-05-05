@@ -24,6 +24,13 @@ window.BracketView = {
                 </div>
             </div>
 
+            <div class="card print-hide" id="bracket-tabs" style="display:none; margin-bottom: 1rem;">
+                <div class="flex gap-4">
+                    <button class="btn primary" id="tab-main-bracket">🏆 Hlavný Pavúk (Play-off)</button>
+                    <button class="btn secondary" id="tab-cons-bracket">🏅 Pavúk Útechy (Consolation)</button>
+                </div>
+            </div>
+
             <div class="bracket-container card">
                 <!-- Dynamicky vykreslené v init() -->
             </div>
@@ -199,19 +206,44 @@ window.BracketView = {
             };
         }
 
+        this.activeBracketName = 'main';
+        
+        const tabContainer = document.getElementById('bracket-tabs');
+        const tabM = document.getElementById('tab-main-bracket');
+        const tabC = document.getElementById('tab-cons-bracket');
+        
+        if (this.t.koBracketConsolation) {
+            tabContainer.style.display = 'block';
+            tabM.onclick = () => {
+                tabM.className = 'btn primary'; tabC.className = 'btn secondary';
+                this.activeBracketName = 'main';
+                this.renderBracket();
+            };
+            tabC.onclick = () => {
+                tabM.className = 'btn secondary'; tabC.className = 'btn primary';
+                this.activeBracketName = 'consolation';
+                this.renderBracket();
+            };
+        }
+
         this.renderBracket();
     },
 
+    getActiveBracket() {
+        return this.activeBracketName === 'consolation' ? this.t.koBracketConsolation : this.t.koBracket;
+    },
+
     renderBracket() {
+        let bracket = this.getActiveBracket();
         // Kontrola byes a update závislostí
-        window.KoBracketEngine.updateDependentMatches(this.t.koBracket);
+        window.KoBracketEngine.updateDependentMatches(bracket);
         DB.saveTournament(this.t); // ulozit aktualizovany stav
 
         const container = document.querySelector('.bracket-container');
         container.innerHTML = '';
         
         let displayRounds = [];
-        for(let r of this.t.koBracket) {
+        for(let r of bracket) {
             if(r.length > 0 && r[0].roundLevel === 99) {
                 if(displayRounds.length > 0) displayRounds[displayRounds.length - 1].push(r[0]);
             } else {
@@ -335,7 +367,8 @@ window.BracketView = {
     },
 
     findMatch(matchId) {
-        for(let rnd of this.t.koBracket) {
+        let bracket = this.getActiveBracket();
+        for(let rnd of bracket) {
             for(let m of rnd) {
                 if(m.matchId === matchId) return m;
             }
@@ -419,8 +452,9 @@ window.BracketView = {
     },
     
     cascadeClearSubsequentMatches(matchId) {
+        let bracket = this.getActiveBracket();
         // Recursive finding all dependent matches and clearing them too
-        for(let rnd of this.t.koBracket) {
+        for(let rnd of bracket) {
             for(let subM of rnd) {
                 if(subM.dependsOn && subM.dependsOn.includes(matchId)) {
                     // Cílový zápas je jasný
@@ -439,15 +473,26 @@ window.BracketView = {
     },
 
     finishTournament() {
-        // Kontrola či je finále ukončené
+        let reqMatches = [];
+        
         let finals = this.t.koBracket[this.t.koBracket.length - 1];
         let preFinals = this.t.koBracket[this.t.koBracket.length - 2];
-        let reqMatches = [];
         if(finals[0].roundLevel === 99) {
              reqMatches.push(finals[0]); // 3rd match
              reqMatches.push(preFinals[0]); // zapas o 1st miesto
         } else {
              reqMatches.push(finals[0]);
+        }
+        
+        if (this.t.koBracketConsolation) {
+            let consFinals = this.t.koBracketConsolation[this.t.koBracketConsolation.length - 1];
+            let consPreFinals = this.t.koBracketConsolation[this.t.koBracketConsolation.length - 2];
+            if(consFinals[0].roundLevel === 99) {
+                 reqMatches.push(consFinals[0]);
+                 reqMatches.push(consPreFinals[0]);
+            } else {
+                 reqMatches.push(consFinals[0]);
+            }
         }
         
         let allDone = true;

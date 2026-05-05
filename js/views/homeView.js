@@ -163,7 +163,7 @@ window.HomeView = {
             btn.onclick = (e) => {
                 const id = e.target.getAttribute('data-id');
                 const t = DB.getTournament(id);
-                if(t.status === 'registration') App.navigate('registration', { tournamentId: id });
+                if(t.status === 'registration' || t.status === 'groups-draft') App.navigate('registration', { tournamentId: id });
                 else if (t.status === 'groups') App.navigate('groups', { tournamentId: id });
                 else if (t.status === 'ko' || t.status === 'finished') App.navigate('bracket', { tournamentId: id });
             };

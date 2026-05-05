@@ -464,20 +464,31 @@ window.GroupsView = {
         // Istota prepocitania 
         this.renderTables(); 
         
-        // Vytvorenie KO z pierwszych dwóch miejsc
+        // Vytvorenie KO z pierwszych dwóch miejsc a ostatnych
         let qualified = [];
+        let consolation = [];
         this.t.groups.forEach(g => {
             // players by _finalRank
             let p1 = g.players.find(x => x._finalRank === 1);
             let p2 = g.players.find(x => x._finalRank === 2);
             if(p1) qualified.push({ ...p1, _seedGroup: g.name, _pos: 1 });
             if(p2) qualified.push({ ...p2, _seedGroup: g.name, _pos: 2 });
+            
+            let others = g.players.filter(x => x._finalRank > 2);
+            others.forEach(p => {
+                consolation.push({ ...p, _seedGroup: g.name, _pos: p._finalRank - 2 });
+            });
         });
         
         if(qualified.length === 0) return;
         
         // Nasadenie do Pavúka
         this.t.koBracket = window.KoBracketEngine.generateBracket(qualified, this.t.groupsCount);
+        if(consolation.length > 0) {
+            this.t.koBracketConsolation = window.KoBracketEngine.generateBracket(consolation, this.t.groupsCount);
+        } else {
+            this.t.koBracketConsolation = null;
+        }
         this.t.status = 'ko';
         
         DB.saveTournament(this.t);
